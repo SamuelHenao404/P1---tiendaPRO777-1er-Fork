@@ -1,0 +1,23 @@
+{% extends "items/base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}CustomShirt | Register{% endblock title %}
+
+{% block navigation %}{% endblock navigation %}
+
+{% block content %}      
+<!--Login--> 
+<div class="container p-4 px-lg-5">
+  <h1 class="display-6 fw-bolder">Login</h1>
+  <form method="POST">
+    {% csrf_token %}
+    {{ login_form|crispy }}
+    <button class="btn btn-secondary mt-3" type="submit">Login</button>
+  </form>
+  <p class="text-center">Don't have an account? <a href="{% url "register" %}">Create an account</a>.</p>
+</div>
+
+{% endblock %}
+
+{% block footer %}{% endblock footer %}

@@ -1,0 +1,40 @@
+{% extends "items/base.html" %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card border-light my-3">
+        <div class="row no-gutters">
+        <div class="col-md-8">
+            <div class="card-body">
+                <h3 class="card-title">
+                    {{ item.title }} <span class="badge bg-secondary">{{ item.category }}</span>
+                    {% if item.is_on_sale %}<span class="badge bg-danger">Sale!</span>{% endif %}
+                </h3>
+                <p class="card-text">{{ item.description }}</p>
+                <p class="card-text">Price:
+                {% if item.is_on_sale %}
+                    <span class="text-muted text-decoration-line-through">${{ item.price }}</span>
+                    ${{ item.discount }}
+                {% else %}
+                    ${{ item.price }}
+                {% endif %}
+                </p>
+                {% if user.is_authenticated %}
+                <form method="post" action="{% url 'cart:add_to_cart' item.id %}">
+                    {% csrf_token %}
+                    <label for="size" class="form-label">Talla:</label>
+                    <select name="size" id="size" class="form-select mb-2" required>
+                        <option value="S">S</option>
+                        <option value="M">M</option>
+                        <option value="L">L</option>
+                        <option value="XL">XL</option>
+                    </select>
+                    <button type="submit" class="btn btn-outline-dark fs-5">Agregar al carrito</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

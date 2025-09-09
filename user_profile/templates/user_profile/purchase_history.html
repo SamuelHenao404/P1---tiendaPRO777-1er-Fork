@@ -1,0 +1,29 @@
+{% extends "items/base.html" %}
+
+{% block content %}
+<header class="bg-dark py-5">
+    <div class="container px-4 px-lg-5">
+        <div class="text-center text-white">
+            <h1 class="display-6">Purchase history</h1>
+        </div>
+    </div>
+</header>
+<ul class="list-group list-group-light px-6 py-3">
+    {% for receipt in receipts %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <div>
+        <div class="fw-bold">@{{ receipt.buyer }}</div>
+        <div class="text-muted">{{ receipt.date }}</div>
+      </div>
+      <div>
+        <ul>
+        {% for item in receipt.receipt_items %}
+            <li>{{ item.title }}</li>
+        {% endfor %}
+        </ul>
+      </div>
+      <span class="badge bg-success fs-6">Total: ${{ receipt.total }}</span>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock content %}

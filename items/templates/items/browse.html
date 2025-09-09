@@ -1,0 +1,67 @@
+{% extends "items/base.html" %}
+
+{% block content %}
+<div class="pb-6 px-3 row gx-4 gx-lg-5 bg-light">
+    
+    <div class="col-3 container px-4 px-lg-5 mt-5">
+        <form action="{% url "items:browse" %}" method="get">
+            <input name="query" class="py-4 px-6 border" type="text" value="{{query}}" placeholder="Type something...">
+
+            <button class="btn btn-secondary py-4 px-6">Search</button>
+        </form>
+
+        <hr class="my-6">
+
+        <p class="font-semibold">Categories</p>
+        {% for category in categories %}
+        <div class="list-group">
+            <a href="{% url 'items:browse' %}?query={{ query }}&category={{ category.id }}" class="list-group-item list-group-item-action mb-1 mx-2 {% if category.id == category_id %} active {% endif %}">{{ category }}</a>
+        </div>
+        {% endfor %}
+        <hr class="my-6">
+
+        <div>
+            <a href="{% url 'items:browse' %}" class="btn btn-warning">Clear Filters</a>
+        </div>
+    </div>
+
+    <div class="col container px-4 px-lg-5 mt-5">
+        <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-left">
+            {% for item in items %}
+            <div class="col mb-5">
+                <div class="card h-100">
+                    <!-- Sale badge-->
+                    {% if item.is_on_sale %}
+                    <div class="badge bg-dark text-white position-absolute" style="top: 0.5rem; right: 0.5rem">Sale</div>
+                    {% endif %}
+                    <!-- Product image-->
+                    {% if item.image %}
+                    <img class="card-img-top img-fluid" src="{{ item.image.url }}" alt="..." />
+                    {% else %}
+                    <img class="card-img-top" src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg" alt="..." />
+                    {% endif %}
+                    <!-- Product details-->
+                    <div class="card-body p-4">
+                        <div class="text-center">
+                            <!-- Product name-->
+                            <h5 class="fw-bolder">{{ item.title }}</h5>
+                            <!-- Product price-->
+                            {% if item.is_on_sale %}
+                            <span class="text-muted text-decoration-line-through">${{ item.price }}</span>
+                            ${{ item.discounted_price }}
+                            {% else %}
+                            ${{ item.price }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Product actions-->
+                    <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
+                        <div class="text-center"><a class="btn btn-outline-dark mt-auto" href="{% url "items:detail" item.id %}">More Detail</a></div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock content %}
