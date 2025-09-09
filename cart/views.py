@@ -65,3 +65,5 @@ def purchase(request):
         receipt.save()
         request.session.pop("cart_items")
         return redirect("user_profile:purchases")
+
+print("hola")
