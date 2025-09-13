@@ -1,0 +1,12 @@
+{% extends "items/base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Editar Perfil</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+    </form>
+    <a href="{% url 'user_profile:change_password' %}" class="btn btn-link mt-3">Cambiar contraseña</a>
+</div>
+{% endblock %}
