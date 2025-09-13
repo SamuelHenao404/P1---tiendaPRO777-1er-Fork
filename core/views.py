@@ -20,13 +20,16 @@ def user_login(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                messages.info(request, f"You are now logged in as {username}.")
+                messages.info(request, f"Has iniciado sesión como {username}.")
                 return redirect("items:index")
             else:
-                messages.error(request, "Invalid username or password.")
+                messages.error(request, "Usuario o contraseña incorrectos.")
         else:
-            messages.error(request, "Invalid username or password.")
-    form = AuthenticationForm()
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{form.fields[field].label if field in form.fields else field}: {error}")
+    else:
+        form = AuthenticationForm()
     return render(
         request,
         "core/login.html",
