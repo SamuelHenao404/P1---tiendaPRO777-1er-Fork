@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
-from items.models import Item, PurchaseReceipt
+from items.models import Item, PurchaseReceipt, PurchasedItem
 from .models import Cart, CartItem
 from django.views.decorators.http import require_POST
 
@@ -50,8 +50,20 @@ def purchase(request):
     receipt.save()
     total = 0
     for cart_item in cart_items:
-        receipt.items.add(cart_item.item)
+        PurchasedItem.objects.create(
+            receipt=receipt,
+            item=cart_item.item,
+            size=cart_item.size,
+            quantity=cart_item.quantity
+        )
         total += cart_item.item.discounted_price() * cart_item.quantity
+        # Descontar stock
+        item_obj = cart_item.item
+        item_obj.stock -= cart_item.quantity
+        if item_obj.stock <= 0:
+            item_obj.stock = 0
+            item_obj.is_sold = True
+        item_obj.save()
     receipt.total = total
     receipt.save()
     cart.items.all().delete()

@@ -45,12 +45,17 @@
                         <div class="text-center">
                             <!-- Product name-->
                             <h5 class="fw-bolder">{{ item.title }}</h5>
-                            <!-- Product price-->
-                            {% if item.is_on_sale %}
-                            <span class="text-muted text-decoration-line-through">${{ item.price }}</span>
-                            ${{ item.discounted_price }}
+                            {% if item.stock == 0 or item.is_sold %}
+                                <span class="badge bg-danger">Sold Out</span>
                             {% else %}
-                            ${{ item.price }}
+                                <!-- Product price-->
+                                {% if item.is_on_sale %}
+                                <span class="text-muted text-decoration-line-through">${{ item.price }}</span>
+                                ${{ item.discounted_price }}
+                                {% else %}
+                                ${{ item.price }}
+                                {% endif %}
+                                <div class="mt-2 text-muted">Stock: {{ item.stock }}</div>
                             {% endif %}
                         </div>
                     </div>

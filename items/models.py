@@ -25,6 +25,7 @@ class Item(models.Model):
     category = models.ForeignKey(
         Category, on_delete=models.CASCADE, related_name="items"
     )
+    stock = models.IntegerField(default=0)
 
     class Meta:
         ordering = ("title",)
@@ -38,7 +39,6 @@ class Item(models.Model):
 
 class PurchaseReceipt(models.Model):
     buyer = models.ForeignKey(User, on_delete=models.CASCADE)
-    items = models.ManyToManyField(Item, related_name="purchase_receipts")
     total = models.FloatField(default=0.0)
     date = models.DateTimeField(auto_now_add=True)
 
@@ -46,4 +46,14 @@ class PurchaseReceipt(models.Model):
         return f"{self.buyer.username} | {self.total} | {self.date}"
 
     def receipt_items(self):
-        return list(self.items.all())
+        return list(self.purchased_items.all())
+
+
+class PurchasedItem(models.Model):
+    receipt = models.ForeignKey(PurchaseReceipt, on_delete=models.CASCADE, related_name="purchased_items")
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    size = models.CharField(max_length=20, blank=True, null=True)
+    quantity = models.IntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.item.title} | Talla: {self.size} | Cantidad: {self.quantity}"

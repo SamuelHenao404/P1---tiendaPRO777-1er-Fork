@@ -20,17 +20,21 @@
                 {% endif %}
                 </p>
                 {% if user.is_authenticated %}
-                <form method="post" action="{% url 'cart:add_to_cart' item.id %}">
-                    {% csrf_token %}
-                    <label for="size" class="form-label">Talla:</label>
-                    <select name="size" id="size" class="form-select mb-2" required>
-                        <option value="S">S</option>
-                        <option value="M">M</option>
-                        <option value="L">L</option>
-                        <option value="XL">XL</option>
-                    </select>
-                    <button type="submit" class="btn btn-outline-dark fs-5">Agregar al carrito</button>
-                </form>
+                    {% if item.stock == 0 or item.is_sold %}
+                        <div class="alert alert-danger mt-3">Producto agotado. No disponible para compra.</div>
+                    {% else %}
+                        <form method="post" action="{% url 'cart:add_to_cart' item.id %}">
+                            {% csrf_token %}
+                            <label for="size" class="form-label">Talla:</label>
+                            <select name="size" id="size" class="form-select mb-2" required>
+                                <option value="S">S</option>
+                                <option value="M">M</option>
+                                <option value="L">L</option>
+                                <option value="XL">XL</option>
+                            </select>
+                            <button type="submit" class="btn btn-outline-dark fs-5">Agregar al carrito</button>
+                        </form>
+                    {% endif %}
                 {% endif %}
             </div>
         </div>
