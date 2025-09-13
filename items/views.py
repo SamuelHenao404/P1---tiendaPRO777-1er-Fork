@@ -6,7 +6,7 @@ from .models import Category, Item
 
 # Create your views here.
 def index(request):
-    items = get_list_or_404(Item, is_sold=False)[:8]
+    items = Item.objects.filter(is_sold=False)[:8]
     for item in items:
         if item.is_on_sale:
             item.discount = item.discounted_price()
