@@ -42,9 +42,15 @@ CECILIA es una plataforma web para la personalización y compra de prendas de ve
 - Carrito de compras: `/cart/`
 - Compra de productos: botón "Buy" en el carrito
 
+
 ## Notas
 - Los productos personalizados se agregan y gestionan desde el carrito principal.
 - El panel de administración está disponible en `/admin/`.
 
 ## Contacto
 Para dudas o soporte, contacta al equipo de desarrollo.
+
+## Integrantes
+- Juan Simón Ospina
+- Sebastián Durán
+- Thomas Buitrago
