@@ -1,27 +1,50 @@
-# django-ecommerce
-A very simple and noob-friendly E-Commerce shop created using django. This is a very simple web application, so 
-please report any issues or inconsistencies that you encounter.
+# Proyecto CECILIA
 
-## Features
-Even though this shop project is very simple, it has some interesting functionalities:
-- The ability to add, remove, and update items in the admin panel
-- User signup, sign in, and logout
-- A session-based cart, with the ability to add and remove items
-- The ability to finalize your purchase
-- The ability to search and filter items
+## Descripción
+CECILIA es una plataforma web para la personalización y compra de prendas de vestir, desarrollada con Django. Permite a los usuarios diseñar camisetas y hoodies, agregar productos personalizados al carrito y realizar compras.
 
-## Installation
-Clone the repository by typing the following command:
-```
-git clone https://github.com/S4mpl3r/django-ecommerce.git
-```
-Then create a python virtual environment for this project and activate it.
-Then cd into the project directory and run the following command to install the requirements:
-```
-pip install -r requirements.txt
-```
-After this, you can apply the database migrations and start the server:
-```
-python manage.py migrate
-python manage.py runserver
-```
+## Requisitos
+- Python 3.13+
+- Django 4.2+
+- Base de datos SQLite (por defecto)
+- Instalar dependencias con:
+  ```bash
+  pip install -r requirements.txt
+  ```
+
+## Ejecución
+1. Clona el repositorio y accede a la carpeta principal:
+	```bash
+	cd ProjectCECILIA
+	```
+2. Realiza las migraciones:
+	```bash
+	python manage.py migrate
+	```
+3. (Opcional) Crea un superusuario para acceder al admin:
+	```bash
+	python manage.py createsuperuser
+	```
+4. Ejecuta el servidor de desarrollo:
+	```bash
+	python manage.py runserver
+	```
+
+## Ruta principal
+- Accede a la aplicación en: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+- La página principal muestra el catálogo de productos.
+- Para personalizar y comprar, debes iniciar sesión.
+
+## Funcionalidades principales
+- Catálogo de productos: `/` (home)
+- Detalle de producto: `/items/<id>/`
+- Personalización: `/personalizaciones/personalizar/<id>/`
+- Carrito de compras: `/cart/`
+- Compra de productos: botón "Buy" en el carrito
+
+## Notas
+- Los productos personalizados se agregan y gestionan desde el carrito principal.
+- El panel de administración está disponible en `/admin/`.
+
+## Contacto
+Para dudas o soporte, contacta al equipo de desarrollo.
