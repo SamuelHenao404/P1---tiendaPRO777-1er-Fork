@@ -1,3 +1,38 @@
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Pedido
+# Vista para empresas: mostrar pedidos asignados
+@login_required(login_url="login")
+def pedidos_empresa(request):
+    if not hasattr(request.user, 'empresa'):
+        return render(request, "items/no_access.html")
+    estado = request.GET.get('estado')
+    pedidos = Pedido.objects.filter(empresa_encargada=request.user.empresa)
+    if estado:
+        pedidos = pedidos.filter(estado=estado)
+
+    # Cambiar estado de pedido (POST)
+    if request.method == "POST":
+        pedido_id = request.POST.get('pedido_id')
+        nuevo_estado = request.POST.get('nuevo_estado')
+        pedido = get_object_or_404(Pedido, id=pedido_id, empresa_encargada=request.user.empresa)
+        if nuevo_estado in dict(Pedido.ESTADO_CHOICES):
+            pedido.estado = nuevo_estado
+            pedido.save()
+        return redirect(request.path + f'?estado={estado}' if estado else request.path)
+
+    return render(request, "items/pedidos_empresa.html", {"pedidos": pedidos, "estado": estado, "estados": Pedido.ESTADO_CHOICES})
+from django.http import FileResponse, Http404
+from .models import Pedido
+# Vista para servir el PDF del pedido
+def pedido_recibo_pdf(request, pedido_id):
+    try:
+        pedido = Pedido.objects.get(id=pedido_id, nombre_cliente=request.user.nombre)
+        if not pedido.recibo_pdf:
+            raise Http404("Recibo no encontrado")
+        return FileResponse(pedido.recibo_pdf.open('rb'), content_type='application/pdf')
+    except Pedido.DoesNotExist:
+        raise Http404("Pedido no encontrado")
 from django.db.models import Q
 from django.shortcuts import get_list_or_404, get_object_or_404, render
 from django.views.generic.detail import DetailView
@@ -9,8 +44,21 @@ from personalizaciones.models import PlantillaBase
 
 # ---------- Listado (home del catálogo) ----------
 def item_list(request):
-    items = Item.objects.all().order_by("id")
-    return render(request, "items/index.html", {"items": items})
+    if request.user.is_authenticated:
+        if hasattr(request.user, 'tipo_usuario') and request.user.tipo_usuario == 'cliente':
+            items = Item.objects.all().order_by("id")
+            return render(request, "items/index.html", {"items": items})
+        elif hasattr(request.user, 'tipo_usuario') and request.user.tipo_usuario == 'empresa':
+            # Redirigir a dashboard de empresa (ajusta la URL según tu app)
+            return render(request, "items/empresa_dashboard.html")
+        elif hasattr(request.user, 'tipo_usuario') and request.user.tipo_usuario == 'administrador':
+            # Redirigir a dashboard de admin (ajusta la URL según tu app)
+            return render(request, "items/admin_dashboard.html")
+        else:
+            return render(request, "items/no_access.html")
+    else:
+        # Usuario no autenticado: puedes mostrar home público o redirigir al login
+        return render(request, "items/index.html", {"items": []})
 
 # ---------- Utilidad para deducir el tipo desde el título ----------
 def _infer_tipo_from_title(title: str) -> str:

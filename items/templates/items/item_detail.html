@@ -23,7 +23,7 @@
             {% endif %}
           </p>
 
-          {% if user.is_authenticated %}
+          {% if user.is_authenticated and user.tipo_usuario == 'cliente' %}
 
             <h5 class="mt-4">Previsualización</h5>
             <div class="mb-3">
@@ -166,7 +166,7 @@
               })();
             </script>
 
-          {% else %}
+          {% elif not user.is_authenticated %}
             <p class="mt-3">
               <a class="btn btn-primary" href="{% url 'login' %}">Inicia sesión</a>
               para personalizar tu prenda.

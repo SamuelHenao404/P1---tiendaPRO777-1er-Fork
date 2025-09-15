@@ -41,8 +41,8 @@
   <div class="container py-5 h-100">
     <div class="profile-header">
       <div>
-        <h2 class="fw-bold">@{{ user.username }}</h2>
-        <span class="text-muted">{{ user.first_name }}</span>
+        <h2 class="fw-bold">@{{ user.nombre }}</h2>
+        <span class="text-muted">{{ user.nombre }}</span>
       </div>
       <div class="profile-actions">
         <a href="{% url 'user_profile:purchases' %}" class="btn btn-secondary">Ver historial de compras</a>
@@ -54,7 +54,7 @@
       <div class="row mb-3">
         <div class="col-md-12">
           <strong>Email:</strong>
-          <p class="text-muted mb-0">{{ user.email }}</p>
+          <p class="text-muted mb-0">{{ user.correo }}</p>
         </div>
       </div>
       <h5 class="mb-3">Historial</h5>

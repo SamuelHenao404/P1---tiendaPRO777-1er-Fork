@@ -1,13 +1,14 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
+
 from items.models import Item
 
 class Cart(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     total = models.FloatField(default=0.0)
-    
+
     def __str__(self):
-        return f"Carrito de {self.user.username}"
+        return f"Carrito de {self.user.nombre}"
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)

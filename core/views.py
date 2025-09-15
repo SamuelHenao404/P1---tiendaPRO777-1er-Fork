@@ -21,6 +21,9 @@ def user_login(request):
             if user is not None:
                 login(request, user)
                 messages.info(request, f"Has iniciado sesión como {username}.")
+                # Redirigir a pedidos de empresa si es empresa
+                if hasattr(user, 'tipo_usuario') and user.tipo_usuario == 'empresa':
+                    return redirect('items:pedidos_empresa')
                 return redirect("items:index")
             else:
                 messages.error(request, "Usuario o contraseña incorrectos.")

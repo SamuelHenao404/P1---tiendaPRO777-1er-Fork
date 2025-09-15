@@ -74,7 +74,9 @@
     {% if cart_items or personalizado_items %}
     <div class="card border-light my-3 text-center">
         <p class="fs-5"><strong>Total: ${{ sum }}</strong></p>
-        <a href="{% url 'cart:purchase' %}" class="btn btn-outline-dark fs-5 card-body">Buy</a>
+        <form action="{% url 'cart:purchase' %}" method="get">
+            <button type="submit" class="btn btn-outline-dark fs-5 card-body">Buy</button>
+        </form>
     </div>
     {% endif %}
 </div>

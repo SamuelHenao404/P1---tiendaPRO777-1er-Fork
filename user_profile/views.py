@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.shortcuts import render, redirect
 from .forms import EditProfileForm, CustomPasswordChangeForm
-from items.models import PurchaseReceipt
+from items.models import PurchaseReceipt, Pedido
 
 
 @login_required(login_url="login")
@@ -14,11 +14,13 @@ def user_profile(request):
 @login_required(login_url="login")
 def purchase_history(request):
     receipts = list(PurchaseReceipt.objects.filter(buyer=request.user))
+    pedidos = list(Pedido.objects.filter(nombre_cliente=request.user.nombre))
     return render(
         request,
         "user_profile/purchase_history.html",
         {
             "receipts": receipts,
+            "pedidos": pedidos,
         },
     )
 

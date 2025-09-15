@@ -1,0 +1,14 @@
+{% extends "items/base.html" %}
+
+{% block content %}
+<div class="container my-5 text-center">
+    <h2>¡Compra realizada con éxito!</h2>
+    <p>Puedes descargar tu recibo aquí:</p>
+    <a href="{% url 'items:pedido_recibo_pdf' pedido.id %}" target="_blank" class="btn btn-success">Ver/Descargar recibo PDF</a>
+    <br><br>
+    <a href="{% url 'user_profile:purchases' %}" class="btn btn-primary">Ir al historial de compras</a>
+</div>
+<script>
+    window.open("{% url 'items:pedido_recibo_pdf' pedido.id %}", "_blank");
+</script>
+{% endblock content %}
