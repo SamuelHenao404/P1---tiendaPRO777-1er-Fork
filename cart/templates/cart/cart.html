@@ -9,6 +9,7 @@
     </div>
 </header>
 <div class="container my-5">
+    {# Carrito de productos normales #}
     {% for item in cart_items %}
     <div class="card border-light my-3">
         <div class="row no-gutters">
@@ -18,6 +19,13 @@
             </h3>
             <div class="card-body">
                 <p class="card-text">Talla: <strong>{{ item.size }}</strong></p>
+                <p class="card-text">Color: <strong>{{ item.color }}</strong></p>
+                <p class="card-text">Cantidad: <strong>{{ item.quantity }}</strong></p>
+                {% if item.imagen_diseno %}
+                    <p class="card-text">Diseño:
+                        <img src="{{ item.imagen_diseno.url }}" alt="Diseño" style="max-width:80px;max-height:80px;">
+                    </p>
+                {% endif %}
                 <p class="card-text">Price:
                 {% if item.item.is_on_sale %}
                     <span class="text-muted text-decoration-line-through">${{ item.item.price }}</span>
@@ -32,7 +40,38 @@
         </div>
     </div>
     {% endfor %}
-    {% if cart_items %}
+
+    {# Carrito de productos personalizados #}
+    {% if personalizado_items %}
+        <h2 class="mt-5">Personalizados</h2>
+        {% for item in personalizado_items %}
+        <div class="card border-light my-3">
+            <div class="row no-gutters">
+            <div class="col-md-8">
+                <h3 class="card-header">
+                    {{ item.pp.producto }}
+                </h3>
+                <div class="card-body">
+                    <p class="card-text">Talla: <strong>{{ item.talla }}</strong></p>
+                    <p class="card-text">Color: <strong>{{ item.color }}</strong></p>
+                    <p class="card-text">Cantidad: <strong>{{ item.cantidad }}</strong></p>
+                    <p class="card-text">Subtotal: ${{ item.subtotal }}</p>
+                    <p class="card-text">Diseño:
+                        {% if item.pp.diseno.imagen_original %}
+                            <img src="{{ item.pp.diseno.imagen_original.url }}" alt="Diseño" style="max-width:80px;max-height:80px;">
+                        {% else %}
+                            Sin imagen
+                        {% endif %}
+                    </p>
+                    <a href="{% url 'carrito_eliminar' forloop.counter0 %}" class="btn btn-outline-danger fs-5">Eliminar</a>
+                </div>
+            </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if cart_items or personalizado_items %}
     <div class="card border-light my-3 text-center">
         <p class="fs-5"><strong>Total: ${{ sum }}</strong></p>
         <a href="{% url 'cart:purchase' %}" class="btn btn-outline-dark fs-5 card-body">Buy</a>

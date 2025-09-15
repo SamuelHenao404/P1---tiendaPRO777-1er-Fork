@@ -4,28 +4,136 @@
 <div class="pb-6 px-3 row gx-4 gx-lg-5 bg-light">
     
     <div class="col-3 container px-4 px-lg-5 mt-5">
+        <!-- Search Form -->
         <form action="{% url "items:browse" %}" method="get">
-            <input name="query" class="py-4 px-6 border" type="text" value="{{query}}" placeholder="Type something...">
-
-            <button class="btn btn-secondary py-4 px-6">Search</button>
+            <input name="query" class="form-control py-2 px-3 mb-3" type="text" value="{{ request.GET.query }}" placeholder="Buscar productos...">
+            <button class="btn btn-secondary w-100 mb-3">Buscar</button>
+            
+            <!-- Hidden fields to preserve other filters -->
+            {% if request.GET.category %}
+                <input type="hidden" name="category" value="{{ request.GET.category }}">
+            {% endif %}
+            {% if request.GET.sort %}
+                <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+            {% endif %}
+            {% if request.GET.min_price %}
+                <input type="hidden" name="min_price" value="{{ request.GET.min_price }}">
+            {% endif %}
+            {% if request.GET.max_price %}
+                <input type="hidden" name="max_price" value="{{ request.GET.max_price }}">
+            {% endif %}
+            {% if request.GET.in_stock_only %}
+                <input type="hidden" name="in_stock_only" value="{{ request.GET.in_stock_only }}">
+            {% endif %}
+            {% if request.GET.on_sale_only %}
+                <input type="hidden" name="on_sale_only" value="{{ request.GET.on_sale_only }}">
+            {% endif %}
         </form>
 
-        <hr class="my-6">
+        <hr class="my-4">
 
-        <p class="font-semibold">Categories</p>
-        {% for category in categories %}
-        <div class="list-group">
-            <a href="{% url 'items:browse' %}?query={{ query }}&category={{ category.id }}" class="list-group-item list-group-item-action mb-1 mx-2 {% if category.id == category_id %} active {% endif %}">{{ category }}</a>
+        <!-- Categories Filter -->
+        <p class="font-weight-bold">Categorías</p>
+        <div class="list-group mb-3">
+            <a href="{% url 'items:browse' %}{% if request.GET.query %}?query={{ request.GET.query }}{% endif %}" 
+               class="list-group-item list-group-item-action {% if not request.GET.category %}active{% endif %}">
+                Todas las categorías
+            </a>
+            {% for category in categories %}
+            <a href="{% url 'items:browse' %}?{% if request.GET.query %}query={{ request.GET.query }}&{% endif %}category={{ category.id }}" 
+               class="list-group-item list-group-item-action {% if category.id|stringformat:'s' == request.GET.category %}active{% endif %}">
+                {{ category }}
+            </a>
+            {% endfor %}
         </div>
-        {% endfor %}
-        <hr class="my-6">
 
+        <hr class="my-4">
+
+        <!-- Price Range Filter -->
+        <p class="font-weight-bold">Rango de Precios</p>
+        <form action="{% url "items:browse" %}" method="get" class="mb-3">
+            <div class="row">
+                <div class="col-6">
+                    <input name="min_price" class="form-control form-control-sm" type="number" value="{{ request.GET.min_price }}" placeholder="Min" min="0" step="0.01">
+                </div>
+                <div class="col-6">
+                    <input name="max_price" class="form-control form-control-sm" type="number" value="{{ request.GET.max_price }}" placeholder="Max" min="0" step="0.01">
+                </div>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm w-100 mt-2">Aplicar</button>
+            
+            <!-- Hidden fields -->
+            {% if request.GET.query %}
+                <input type="hidden" name="query" value="{{ request.GET.query }}">
+            {% endif %}
+            {% if request.GET.category %}
+                <input type="hidden" name="category" value="{{ request.GET.category }}">
+            {% endif %}
+            {% if request.GET.sort %}
+                <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+            {% endif %}
+            {% if request.GET.in_stock_only %}
+                <input type="hidden" name="in_stock_only" value="{{ request.GET.in_stock_only }}">
+            {% endif %}
+            {% if request.GET.on_sale_only %}
+                <input type="hidden" name="on_sale_only" value="{{ request.GET.on_sale_only }}">
+            {% endif %}
+        </form>
+
+        <hr class="my-4">
+
+        <!-- Additional Filters -->
+        <p class="font-weight-bold">Filtros Adicionales</p>
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="inStockOnly" {% if request.GET.in_stock_only %}checked{% endif %} 
+                   onchange="toggleFilter('in_stock_only', this.checked)">
+            <label class="form-check-label" for="inStockOnly">Solo en stock</label>
+        </div>
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="onSaleOnly" {% if request.GET.on_sale_only %}checked{% endif %} 
+                   onchange="toggleFilter('on_sale_only', this.checked)">
+            <label class="form-check-label" for="onSaleOnly">Solo en oferta</label>
+        </div>
+
+        <hr class="my-4">
+
+        <!-- Clear Filters -->
         <div>
-            <a href="{% url 'items:browse' %}" class="btn btn-warning">Clear Filters</a>
+            <a href="{% url 'items:browse' %}" class="btn btn-warning w-100">Limpiar Filtros</a>
         </div>
     </div>
 
     <div class="col container px-4 px-lg-5 mt-5">
+        <!-- Results Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4>Productos {% if request.GET.query %}para "{{ request.GET.query }}"{% endif %}</h4>
+                <p class="text-muted">
+                    {% if items.paginator %}
+                        {{ items.paginator.count }} producto{{ items.paginator.count|pluralize }} encontrado{{ items.paginator.count|pluralize }}
+                    {% else %}
+                        {{ items|length }} producto{{ items|length|pluralize }} encontrado{{ items|length|pluralize }}
+                    {% endif %}
+                </p>
+            </div>
+            
+            <!-- Sort Options -->
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    Ordenar por
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort=title">Nombre (A-Z)</a></li>
+                    <li><a class="dropdown-item" href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort=-title">Nombre (Z-A)</a></li>
+                    <li><a class="dropdown-item" href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort=price">Precio (Menor a Mayor)</a></li>
+                    <li><a class="dropdown-item" href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort=-price">Precio (Mayor a Menor)</a></li>
+                    <li><a class="dropdown-item" href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort=-created_at">Más Recientes</a></li>
+                    <li><a class="dropdown-item" href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort=created_at">Más Antiguos</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
         <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-left">
             {% for item in items %}
             <div class="col mb-5">
@@ -45,7 +153,7 @@
                         <div class="text-center">
                             <!-- Product name-->
                             <h5 class="fw-bolder">{{ item.title }}</h5>
-                            {% if item.stock == 0 or item.is_sold %}
+                            {% if item.stock == 0 %}
                                 <span class="badge bg-danger">Sold Out</span>
                             {% else %}
                                 <!-- Product price-->
@@ -65,8 +173,59 @@
                     </div>
                 </div>
             </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <h5>No se encontraron productos</h5>
+                    <p class="text-muted">Intenta ajustar tus filtros de búsqueda</p>
+                    <a href="{% url 'items:browse' %}" class="btn btn-primary">Ver todos los productos</a>
+                </div>
+            </div>
             {% endfor %}
         </div>
+
+        <!-- Pagination -->
+        {% if items.has_other_pages %}
+        <nav aria-label="Product pagination" class="mt-5">
+            <ul class="pagination justify-content-center">
+                {% if items.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ items.previous_page_number }}">Anterior</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in items.paginator.page_range %}
+                    {% if items.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > items.number|add:'-3' and num < items.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if items.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ items.next_page_number }}">Siguiente</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
     </div>
 </div>
+
+<script>
+function toggleFilter(filterName, isChecked) {
+    const url = new URL(window.location);
+    if (isChecked) {
+        url.searchParams.set(filterName, 'true');
+    } else {
+        url.searchParams.delete(filterName);
+    }
+    window.location.href = url.toString();
+}
+</script>
 {% endblock content %}

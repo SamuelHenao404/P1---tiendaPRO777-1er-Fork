@@ -1,0 +1,180 @@
+{% extends "items/base.html" %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="card border-light my-3">
+    <div class="row no-gutters">
+      <div class="col-md-8">
+        <div class="card-body">
+          <h3 class="card-title">
+            {{ item.title }} <span class="badge bg-secondary">{{ item.category }}</span>
+            {% if item.is_on_sale %}<span class="badge bg-danger">Sale!</span>{% endif %}
+          </h3>
+
+          <p class="card-text">{{ item.description }}</p>
+
+          <p class="card-text">
+            Price:
+            {% if item.is_on_sale %}
+              <span class="text-muted text-decoration-line-through">${{ item.price }}</span>
+              ${{ item.discount }}
+            {% else %}
+              ${{ item.price }}
+            {% endif %}
+          </p>
+
+          {% if user.is_authenticated %}
+
+            <h5 class="mt-4">Previsualización</h5>
+            <div class="mb-3">
+              <canvas id="mockupCanvas" style="max-width:520px;width:100%;border:1px solid #eee;border-radius:8px;"></canvas>
+            </div>
+
+            <h5 class="mt-2">Personaliza tu prenda</h5>
+            <form class="row gy-2 gx-3 align-items-center"
+                  method="post"
+                  action="{% url 'personalizar_producto' item.id %}"
+                  enctype="multipart/form-data">
+              {% csrf_token %}
+
+              <div class="col-sm-2">
+                <label for="perso_talla" class="form-label mb-0 small">Talla</label>
+                <select id="perso_talla" name="talla" class="form-select form-select-sm" required>
+                  <option value="S">S</option>
+                  <option value="M">M</option>
+                  <option value="L">L</option>
+                  <option value="XL">XL</option>
+                </select>
+              </div>
+
+              <div class="col-sm-2">
+                <label for="perso_color" class="form-label mb-0 small">Color</label>
+                <select id="perso_color" name="color" class="form-select form-select-sm" required>
+                  {% if plantillas %}
+                    {% for p in plantillas %}
+                      <option value="{{ p.color|lower }}">{{ p.color|capfirst }}</option>
+                    {% endfor %}
+                  {% else %}
+                    <option value="negro">Negro</option>
+                    <option value="blanco">Blanco</option>
+                    <option value="azul">Azul</option>
+                    <option value="rojo">Rojo</option>
+                  {% endif %}
+                </select>
+              </div>
+
+              <div class="col-sm-2">
+                <label for="perso_cantidad" class="form-label mb-0 small">Cantidad</label>
+                <input id="perso_cantidad" type="number" name="cantidad" min="1" value="1"
+                       class="form-control form-control-sm" required>
+              </div>
+
+              <div class="col-sm-4">
+                <label for="perso_imagen" class="form-label mb-0 small">Diseño (PNG/JPG)</label>
+                <input id="perso_imagen" type="file" name="imagen_diseno"
+                       accept=".png,.jpg,.jpeg" class="form-control form-control-sm">
+                <div class="form-text">Se colocará reducido y centrado al pecho.</div>
+              </div>
+
+              <input type="hidden" name="ubicacion_en_prenda" value="pecho">
+
+              <div class="col-sm-2 d-grid">
+                <label class="form-label mb-0 invisible">.</label>
+                <button type="submit" class="btn btn-primary btn-sm">
+                  Agregar al carrito
+                </button>
+              </div>
+            </form>
+
+            <script>
+              (function () {
+                var PLANTILLAS = {
+                  {% if plantillas %}
+                    {% for p in plantillas %}
+                      "{{ p.color|lower }}": "{{ p.imagen_base.url }}"{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                  {% endif %}
+                };
+
+                var canvas = document.getElementById('mockupCanvas');
+                var ctx = canvas.getContext('2d');
+                var selectColor = document.getElementById('perso_color');
+                var inputFile = document.getElementById('perso_imagen');
+
+                var baseImg = new Image();
+                var designImg = new Image();
+                var DESIGN_WIDTH_RATIO = 0.30;
+                var CHEST_Y_RATIO = 0.45;
+
+                function setCanvasToBase(maxWidth) {
+                  var w = baseImg.width || 1000, h = baseImg.height || 1200;
+                  var ratio = w / h;
+                  var targetW = Math.min(maxWidth || 520, w);
+                  canvas.width = targetW;
+                  canvas.height = Math.round(targetW / ratio);
+                }
+
+                function render() {
+                  if (!baseImg.src) return;
+                  setCanvasToBase(520);
+                  var W = canvas.width, H = canvas.height;
+
+                  ctx.clearRect(0, 0, W, H);
+                  ctx.drawImage(baseImg, 0, 0, W, H);
+
+                  if (designImg.width) {
+                    var dw = W * DESIGN_WIDTH_RATIO;
+                    var scale = dw / designImg.width;
+                    var dh = Math.round(designImg.height * scale);
+                    var dx = Math.round((W - dw) / 2);
+                    var dy = Math.round(H * CHEST_Y_RATIO - dh / 2);
+                    ctx.drawImage(designImg, dx, dy, dw, dh);
+                  }
+                }
+
+                function loadBaseByColor() {
+                  var src = PLANTILLAS[(selectColor.value || '').toLowerCase()];
+                  if (!src) {
+                    {% if item.image %}
+                      src = "{{ item.image.url }}";
+                    {% else %}
+                      return;
+                    {% endif %}
+                  }
+                  baseImg = new Image();
+                  baseImg.onload = render;
+                  baseImg.src = src;
+                }
+
+                function loadDesignFromFile(file) {
+                  if (!file) { designImg = new Image(); render(); return; }
+                  var reader = new FileReader();
+                  reader.onload = function (e) {
+                    designImg = new Image();
+                    designImg.onload = render;
+                    designImg.src = e.target.result;
+                  };
+                  reader.readAsDataURL(file);
+                }
+
+                selectColor.addEventListener('change', loadBaseByColor);
+                inputFile.addEventListener('change', function (e) {
+                  loadDesignFromFile(e.target.files[0]);
+                });
+
+                loadBaseByColor();
+              })();
+            </script>
+
+          {% else %}
+            <p class="mt-3">
+              <a class="btn btn-primary" href="{% url 'login' %}">Inicia sesión</a>
+              para personalizar tu prenda.
+            </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
