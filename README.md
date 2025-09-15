@@ -14,9 +14,9 @@ CECILIA es una plataforma web para la personalización y compra de prendas de ve
 	cd ProjectCECILIA
 	```
  2. Instalar dependencias con:
-  ```bash
-  pip install -r requirements.txt
-  ```
+	```bash
+	pip install -r requirements.txt
+	```
 3. Realiza las migraciones:
 	```bash
 	python manage.py migrate
