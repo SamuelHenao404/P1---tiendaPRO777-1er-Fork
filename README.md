@@ -7,25 +7,25 @@ CECILIA es una plataforma web para la personalización y compra de prendas de ve
 - Python 3.13+
 - Django 4.2+
 - Base de datos SQLite (por defecto)
-- Instalar dependencias con:
-  ```bash
-  pip install -r requirements.txt
-  ```
 
 ## Ejecución
 1. Clona el repositorio y accede a la carpeta principal:
 	```bash
 	cd ProjectCECILIA
 	```
-2. Realiza las migraciones:
+ 2. Instalar dependencias con:
+  ```bash
+  pip install -r requirements.txt
+  ```
+3. Realiza las migraciones:
 	```bash
 	python manage.py migrate
 	```
-3. (Opcional) Crea un superusuario para acceder al admin:
+4. (Opcional) Crea un superusuario para acceder al admin:
 	```bash
 	python manage.py createsuperuser
 	```
-4. Ejecuta el servidor de desarrollo:
+5. Ejecuta el servidor de desarrollo:
 	```bash
 	python manage.py runserver
 	```
