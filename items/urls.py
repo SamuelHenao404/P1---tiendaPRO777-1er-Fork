@@ -1,12 +1,18 @@
 from django.urls import path
+from .views import item_list, ItemDetailView, about, browse
 
-from . import views
-
+# Necesario para poder usar {% url 'items:...' %}
 app_name = "items"
 
 urlpatterns = [
-    path("", views.index, name="index"),
-    path("<int:pk>/", views.detail, name="detail"),
-    path("browse/", views.browse, name="browse"),
-    path("about/", views.about, name="about"),
+    # Home / catálogo
+    path("", item_list, name="index"),
+
+    # Detalle de producto
+    path("items/<int:pk>/", ItemDetailView.as_view(), name="item_detail"),
+    path("item/<int:pk>/", ItemDetailView.as_view(), name="detail"),
+
+    # Páginas auxiliares usadas por el navbar del template base.html
+    path("about/", about, name="about"),
+    path("browse/", browse, name="browse"),
 ]
