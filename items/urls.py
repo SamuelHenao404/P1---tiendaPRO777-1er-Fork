@@ -10,7 +10,7 @@ urlpatterns = [
 
     # Detalle de producto
     path("items/<int:pk>/", ItemDetailView.as_view(), name="item_detail"),
-    path("item/<int:pk>/", ItemDetailView.as_view(), name="detail"),
+    #path("item/<int:pk>/", ItemDetailView.as_view(), name="detail"),
 
     # Páginas auxiliares usadas por el navbar del template base.html
     path("about/", about, name="about"),

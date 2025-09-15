@@ -6,7 +6,7 @@ from PIL import Image
 from django.core.files.base import ContentFile
 from decimal import Decimal
 
-# 👇 Path al modelo de producto real de tu proyecto
+# Path al modelo de producto real de tu proyecto
 # En tu caso, apunta a Item del app "items"
 PRODUCTO_MODEL_PATH = 'items.Item'
 
@@ -35,8 +35,8 @@ def _infer_tipo_from_title(title: str) -> str:
     t = (title or '').lower()
     if 'hoodie' in t:
         return 'hoodie'
-    if 'long-sleeve' in t or 'long sleeve' in t:
-        return 'camibuzo'
+    if 'camibuso' in t or 'long-sleeve' in t or 'long sleeve' in t:
+        return 'camibuso'
     return 'camiseta'
 
 PRICE_FIELDS = ('precio_base', 'price', 'unit_price', 'base_price')
@@ -49,7 +49,7 @@ class ProductoPersonalizado(models.Model):
     )
     diseno = models.ForeignKey(Diseno, on_delete=models.CASCADE, related_name='personalizaciones')
     ubicacion_en_prenda = models.CharField(max_length=100, help_text="pecho/espalda/manga_izquierda/manga_derecha")
-    color = models.CharField(max_length=30, default='negro')  # 👈 nuevo
+    color = models.CharField(max_length=30, default='negro')
     imagen_visualizacion = models.ImageField(upload_to='previews/', blank=True, null=True)
     precio_adicional = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     creado_en = models.DateTimeField(auto_now_add=True)
@@ -141,7 +141,7 @@ class ProductoPersonalizado(models.Model):
 class PlantillaBase(models.Model):
     class Tipo(models.TextChoices):
         CAMISETA = 'camiseta', 'Camiseta'
-        CAMIBUZO = 'camibuzo', 'Camibuzo'
+        CAMIBUSO = 'camibuso', 'Camibuso'
         HOODIE   = 'hoodie',   'Hoodie'
 
     tipo = models.CharField(max_length=20, choices=Tipo.choices)

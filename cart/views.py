@@ -1,8 +1,9 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
 from items.models import Item, PurchaseReceipt, PurchasedItem
 from .models import Cart, CartItem
 from django.views.decorators.http import require_POST
+from personalizaciones.models import PlantillaBase
 
 @login_required(login_url="login")
 def cart(request):
@@ -47,14 +48,23 @@ def cart(request):
 @require_POST
 def add_to_cart(request, item_id):
     size = request.POST.get("size")
+    color = request.POST.get("color")
+    cantidad = request.POST.get("cantidad")
+    imagen_diseno = request.FILES.get("imagen_diseno")
     if not size:
-        return redirect("items:detail", item_id=item_id)
+        return redirect("items:item_detail", pk=item_id)
     item = Item.objects.get(pk=item_id)
     cart, _ = Cart.objects.get_or_create(user=request.user)
     cart_item, created = CartItem.objects.get_or_create(cart=cart, item=item, size=size)
-    if not created:
+    if color:
+        cart_item.color = color
+    if cantidad:
+        cart_item.quantity = int(cantidad)
+    if imagen_diseno:
+        cart_item.imagen_diseno = imagen_diseno
+    if not created and not cantidad:
         cart_item.quantity += 1
-        cart_item.save()
+    cart_item.save()
     return redirect("cart:cart")
 
 @login_required(login_url="login")
@@ -115,3 +125,15 @@ def purchase(request):
     request.session['carrito_personalizado'] = []
     request.session.modified = True
     return redirect("user_profile:purchases")
+    return redirect("user_profile:purchases")
+
+def item_detail(request, pk):
+    item = get_object_or_404(Item, pk=pk)
+    tipo = item.category.lower()
+    plantillas = PlantillaBase.objects.filter(tipo=tipo)
+
+    return render(request, "items/item_detail.html", {
+        "item": item,
+        "plantillas": plantillas,
+        # ...otros context...
+    })

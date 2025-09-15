@@ -15,8 +15,8 @@ def _infer_tipo_from_title(title: str) -> str:
     t = (title or "").lower()
     if "hoodie" in t:
         return "hoodie"
-    if "long-sleeve" in t or "long sleeve" in t:
-        return "camibuzo"
+    if "camibuso" in t or "long-sleeve" in t or "long sleeve" in t:
+        return "camibuso" 
     return "camiseta"
 
 # ---------- Detalle con plantillas (colores desde admin) ----------

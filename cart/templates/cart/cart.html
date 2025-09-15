@@ -19,6 +19,13 @@
             </h3>
             <div class="card-body">
                 <p class="card-text">Talla: <strong>{{ item.size }}</strong></p>
+                <p class="card-text">Color: <strong>{{ item.color }}</strong></p>
+                <p class="card-text">Cantidad: <strong>{{ item.quantity }}</strong></p>
+                {% if item.imagen_diseno %}
+                    <p class="card-text">Diseño:
+                        <img src="{{ item.imagen_diseno.url }}" alt="Diseño" style="max-width:80px;max-height:80px;">
+                    </p>
+                {% endif %}
                 <p class="card-text">Price:
                 {% if item.item.is_on_sale %}
                     <span class="text-muted text-decoration-line-through">${{ item.item.price }}</span>

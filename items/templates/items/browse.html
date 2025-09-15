@@ -45,7 +45,7 @@
                         <div class="text-center">
                             <!-- Product name-->
                             <h5 class="fw-bolder">{{ item.title }}</h5>
-                            {% if item.stock == 0 or item.is_sold %}
+                            {% if item.stock == 0 %}
                                 <span class="badge bg-danger">Sold Out</span>
                             {% else %}
                                 <!-- Product price-->

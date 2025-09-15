@@ -49,7 +49,7 @@ def personalizar(request, producto_id=None):
     else:
         form = FormularioPersonalizacion(initial={'producto': producto_id} if producto_id else None)
 
-    return render(request, 'personalizaciones/personalizar.html', {'form': form})
+    return render(request, 'cart/cart.html', {'form': form})
 
 @login_required
 def carrito_personalizado(request):

@@ -25,13 +25,11 @@
 
           {% if user.is_authenticated %}
 
-            <!-- ============ PREVIEW EN VIVO (CANVAS) ============ -->
             <h5 class="mt-4">Previsualización</h5>
             <div class="mb-3">
               <canvas id="mockupCanvas" style="max-width:520px;width:100%;border:1px solid #eee;border-radius:8px;"></canvas>
             </div>
 
-            <!-- ============ PERSONALIZACIÓN ============ -->
             <h5 class="mt-2">Personaliza tu prenda</h5>
             <form class="row gy-2 gx-3 align-items-center"
                   method="post"
@@ -39,7 +37,6 @@
                   enctype="multipart/form-data">
               {% csrf_token %}
 
-              <!-- Talla -->
               <div class="col-sm-2">
                 <label for="perso_talla" class="form-label mb-0 small">Talla</label>
                 <select id="perso_talla" name="talla" class="form-select form-select-sm" required>
@@ -50,16 +47,14 @@
                 </select>
               </div>
 
-              <!-- Color (desde PlantillaBase) -->
               <div class="col-sm-2">
                 <label for="perso_color" class="form-label mb-0 small">Color</label>
                 <select id="perso_color" name="color" class="form-select form-select-sm" required>
-                  {% if plantillas and plantillas|length %}
+                  {% if plantillas %}
                     {% for p in plantillas %}
                       <option value="{{ p.color|lower }}">{{ p.color|capfirst }}</option>
                     {% endfor %}
                   {% else %}
-                    <!-- Fallback si aún no has creado plantillas -->
                     <option value="negro">Negro</option>
                     <option value="blanco">Blanco</option>
                     <option value="azul">Azul</option>
@@ -68,44 +63,36 @@
                 </select>
               </div>
 
-              <!-- Cantidad -->
               <div class="col-sm-2">
                 <label for="perso_cantidad" class="form-label mb-0 small">Cantidad</label>
                 <input id="perso_cantidad" type="number" name="cantidad" min="1" value="1"
                        class="form-control form-control-sm" required>
               </div>
 
-              <!-- Diseño personalizado -->
               <div class="col-sm-4">
                 <label for="perso_imagen" class="form-label mb-0 small">Diseño (PNG/JPG)</label>
-      <input id="perso_imagen" type="file" name="imagen_diseno"
-        accept=".png,.jpg,.jpeg" class="form-control form-control-sm">
+                <input id="perso_imagen" type="file" name="imagen_diseno"
+                       accept=".png,.jpg,.jpeg" class="form-control form-control-sm">
                 <div class="form-text">Se colocará reducido y centrado al pecho.</div>
               </div>
 
-              <!-- Ubicación fija (pecho) -->
               <input type="hidden" name="ubicacion_en_prenda" value="pecho">
 
-              <!-- Botón enviar -->
               <div class="col-sm-2 d-grid">
                 <label class="form-label mb-0 invisible">.</label>
                 <button type="submit" class="btn btn-primary btn-sm">
-                  Agregar PERSONALIZADO
+                  Agregar al carrito
                 </button>
               </div>
             </form>
 
-            <!-- ======= JS: composición en canvas (base color + diseño centrado) ======= -->
             <script>
               (function () {
-                // Mapa color -> URL de imagen base (desde admin/PlantillaBase)
                 var PLANTILLAS = {
-                  {% if plantillas and plantillas|length %}
+                  {% if plantillas %}
                     {% for p in plantillas %}
                       "{{ p.color|lower }}": "{{ p.imagen_base.url }}"{% if not forloop.last %},{% endif %}
                     {% endfor %}
-                  {% else %}
-                    // Sin plantillas, intenta usar la imagen del item como base
                   {% endif %}
                 };
 
@@ -116,56 +103,44 @@
 
                 var baseImg = new Image();
                 var designImg = new Image();
-                var DESIGN_WIDTH_RATIO = 0.30; // 40% del ancho del canvas
-                var CHEST_Y_RATIO = 0.45;       // altura aproximada del pecho
+                var DESIGN_WIDTH_RATIO = 0.30;
+                var CHEST_Y_RATIO = 0.45;
 
                 function setCanvasToBase(maxWidth) {
-                  // Calcula tamaño del canvas en función de la base
-                  var w = baseImg.width, h = baseImg.height;
-                  if (!w || !h) { w = 1000; h = 1200; } // fallback
+                  var w = baseImg.width || 1000, h = baseImg.height || 1200;
                   var ratio = w / h;
                   var targetW = Math.min(maxWidth || 520, w);
-                  var targetH = Math.round(targetW / ratio);
                   canvas.width = targetW;
-                  canvas.height = targetH;
+                  canvas.height = Math.round(targetW / ratio);
                 }
 
                 function render() {
                   if (!baseImg.src) return;
-
                   setCanvasToBase(520);
-                  var W = canvas.width;
-                  var H = canvas.height;
+                  var W = canvas.width, H = canvas.height;
 
-                  // 1) Base
                   ctx.clearRect(0, 0, W, H);
                   ctx.drawImage(baseImg, 0, 0, W, H);
 
-                  // 2) Diseño (si existe)
-                  if (designImg && designImg.width) {
-                    var targetW = W * DESIGN_WIDTH_RATIO;
-                    var scale = targetW / designImg.width;
-                    var dw = targetW;
+                  if (designImg.width) {
+                    var dw = W * DESIGN_WIDTH_RATIO;
+                    var scale = dw / designImg.width;
                     var dh = Math.round(designImg.height * scale);
-
                     var dx = Math.round((W - dw) / 2);
                     var dy = Math.round(H * CHEST_Y_RATIO - dh / 2);
-
                     ctx.drawImage(designImg, dx, dy, dw, dh);
                   }
                 }
 
                 function loadBaseByColor() {
-                  var c = selectColor ? (selectColor.value || '').toLowerCase() : '';
-                  var src = PLANTILLAS[c];
+                  var src = PLANTILLAS[(selectColor.value || '').toLowerCase()];
                   if (!src) {
-                    // fallback: usa imagen del producto si existe
                     {% if item.image %}
                       src = "{{ item.image.url }}";
+                    {% else %}
+                      return;
                     {% endif %}
                   }
-                  if (!src) return;
-
                   baseImg = new Image();
                   baseImg.onload = render;
                   baseImg.src = src;
@@ -177,26 +152,19 @@
                   reader.onload = function (e) {
                     designImg = new Image();
                     designImg.onload = render;
-                    designImg.src = e.target.result; // dataURL
+                    designImg.src = e.target.result;
                   };
                   reader.readAsDataURL(file);
                 }
 
-                // Eventos
-                if (selectColor) {
-                  selectColor.addEventListener('change', loadBaseByColor);
-                }
-                if (inputFile) {
-                  inputFile.addEventListener('change', function (e) {
-                    loadDesignFromFile(e.target.files && e.target.files[0]);
-                  });
-                }
+                selectColor.addEventListener('change', loadBaseByColor);
+                inputFile.addEventListener('change', function (e) {
+                  loadDesignFromFile(e.target.files[0]);
+                });
 
-                // Inicialización
-                loadBaseByColor(); // carga la base del primer color
+                loadBaseByColor();
               })();
             </script>
-            <!-- ============ /PREVIEW EN VIVO ============ -->
 
           {% else %}
             <p class="mt-3">

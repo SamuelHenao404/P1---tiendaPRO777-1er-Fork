@@ -10,10 +10,12 @@ class Cart(models.Model):
         return f"Carrito de {self.user.username}"
 
 class CartItem(models.Model):
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name="items")
+    cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
-    quantity = models.IntegerField(default=1)
-    size = models.CharField(max_length=20, blank=True, null=True)
+    size = models.CharField(max_length=10, default="M")
+    color = models.CharField(max_length=20, blank=True, null=True)  # Nuevo campo
+    quantity = models.PositiveIntegerField(default=1)               # Cambia a 'quantity' en vez de 'cantidad'
+    imagen_diseno = models.ImageField(upload_to='cart/designs/', blank=True, null=True)  # Nuevo campo
 
     def __str__(self):
         return f"{self.item.title} x{self.quantity} ({self.size})"
