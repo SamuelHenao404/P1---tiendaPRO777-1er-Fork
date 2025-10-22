@@ -31,6 +31,21 @@
             </div>
 
             <h5 class="mt-2">Personaliza tu prenda</h5>
+            
+            <!-- Control de tamaño -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="tamaño_slider" class="form-label">Tamaño de la imagen</label>
+                <input type="range" id="tamaño_slider" class="form-range" min="0.1" max="1.0" step="0.05" value="0.3">
+                <div class="form-text">Tamaño: <span id="tamaño_value">30%</span></div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-text">
+                  <strong>💡 Consejo:</strong> Haz clic y arrastra la imagen en la previsualización para moverla
+                </div>
+              </div>
+            </div>
+
             <form class="row gy-2 gx-3 align-items-center"
                   method="post"
                   action="{% url 'personalizar_producto' item.id %}"
@@ -73,10 +88,14 @@
                 <label for="perso_imagen" class="form-label mb-0 small">Diseño (PNG/JPG)</label>
                 <input id="perso_imagen" type="file" name="imagen_diseno"
                        accept=".png,.jpg,.jpeg" class="form-control form-control-sm">
-                <div class="form-text">Se colocará reducido y centrado al pecho.</div>
+                <div class="form-text">Arrastra y ajusta el tamaño con los controles arriba.</div>
               </div>
 
+              <!-- Campos ocultos para enviar los valores de tamaño y posición -->
               <input type="hidden" name="ubicacion_en_prenda" value="pecho">
+              <input type="hidden" name="tamaño_imagen" id="tamaño_imagen_hidden" value="0.3">
+              <input type="hidden" name="posicion_x" id="posicion_x_hidden" value="0.5">
+              <input type="hidden" name="posicion_y" id="posicion_y_hidden" value="0.35">
 
               <div class="col-sm-2 d-grid">
                 <label class="form-label mb-0 invisible">.</label>
@@ -100,11 +119,28 @@
                 var ctx = canvas.getContext('2d');
                 var selectColor = document.getElementById('perso_color');
                 var inputFile = document.getElementById('perso_imagen');
+                
+                // Control deslizante de tamaño
+                var tamañoSlider = document.getElementById('tamaño_slider');
+                
+                // Campos ocultos para el formulario
+                var tamañoHidden = document.getElementById('tamaño_imagen_hidden');
+                var posicionXHidden = document.getElementById('posicion_x_hidden');
+                var posicionYHidden = document.getElementById('posicion_y_hidden');
+                
+                // Elemento de visualización de valor de tamaño
+                var tamañoValue = document.getElementById('tamaño_value');
 
                 var baseImg = new Image();
                 var designImg = new Image();
-                var DESIGN_WIDTH_RATIO = 0.30;
-                var CHEST_Y_RATIO = 0.45;
+                
+                // Variables para el arrastre con mouse
+                var isDragging = false;
+                var dragStartX = 0;
+                var dragStartY = 0;
+                var currentPosX = 0.5; // Posición inicial centrada
+                var currentPosY = 0.35; // Posición inicial en el pecho
+                var designRect = { x: 0, y: 0, width: 0, height: 0 };
 
                 function setCanvasToBase(maxWidth) {
                   var w = baseImg.width || 1000, h = baseImg.height || 1200;
@@ -123,13 +159,45 @@
                   ctx.drawImage(baseImg, 0, 0, W, H);
 
                   if (designImg.width) {
-                    var dw = W * DESIGN_WIDTH_RATIO;
+                    var tamaño = parseFloat(tamañoSlider.value);
+                    
+                    var dw = W * tamaño;
                     var scale = dw / designImg.width;
                     var dh = Math.round(designImg.height * scale);
-                    var dx = Math.round((W - dw) / 2);
-                    var dy = Math.round(H * CHEST_Y_RATIO - dh / 2);
+                    
+                    // Calcular posición basada en las variables de posición actuales
+                    var dx = Math.round(W * currentPosX - dw / 2);
+                    var dy = Math.round(H * currentPosY - dh / 2);
+                    
+                    // Asegurar que la imagen no se salga de los límites
+                    dx = Math.max(0, Math.min(dx, W - dw));
+                    dy = Math.max(0, Math.min(dy, H - dh));
+                    
+                    // Guardar el rectángulo de la imagen para detectar clics
+                    designRect = { x: dx, y: dy, width: dw, height: dh };
+                    
                     ctx.drawImage(designImg, dx, dy, dw, dh);
+                    
+                    // Dibujar un borde sutil cuando se está arrastrando
+                    if (isDragging) {
+                      ctx.strokeStyle = '#007bff';
+                      ctx.lineWidth = 2;
+                      ctx.strokeRect(dx - 1, dy - 1, dw + 2, dh + 2);
+                    }
                   }
+                }
+
+                function updateValues() {
+                  // Actualizar campos ocultos
+                  tamañoHidden.value = tamañoSlider.value;
+                  posicionXHidden.value = currentPosX;
+                  posicionYHidden.value = currentPosY;
+                  
+                  // Actualizar visualización de valor de tamaño
+                  tamañoValue.textContent = Math.round(tamañoSlider.value * 100) + '%';
+                  
+                  // Re-renderizar
+                  render();
                 }
 
                 function loadBaseByColor() {
@@ -157,11 +225,100 @@
                   reader.readAsDataURL(file);
                 }
 
+                // Función para obtener coordenadas del mouse en el canvas
+                function getMousePos(e) {
+                  var rect = canvas.getBoundingClientRect();
+                  return {
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top
+                  };
+                }
+
+                // Función para verificar si el clic está dentro de la imagen del diseño
+                function isPointInDesign(mouseX, mouseY) {
+                  return mouseX >= designRect.x && 
+                         mouseX <= designRect.x + designRect.width &&
+                         mouseY >= designRect.y && 
+                         mouseY <= designRect.y + designRect.height;
+                }
+
+                // Event listeners para el arrastre con mouse
+                canvas.addEventListener('mousedown', function(e) {
+                  if (!designImg.width) return;
+                  
+                  var mousePos = getMousePos(e);
+                  
+                  if (isPointInDesign(mousePos.x, mousePos.y)) {
+                    isDragging = true;
+                    dragStartX = mousePos.x;
+                    dragStartY = mousePos.y;
+                    canvas.style.cursor = 'grabbing';
+                    render(); // Re-renderizar para mostrar el borde
+                  }
+                });
+
+                canvas.addEventListener('mousemove', function(e) {
+                  if (!isDragging || !designImg.width) return;
+                  
+                  var mousePos = getMousePos(e);
+                  var deltaX = mousePos.x - dragStartX;
+                  var deltaY = mousePos.y - dragStartY;
+                  
+                  // Convertir delta a porcentajes
+                  var deltaXPercent = deltaX / canvas.width;
+                  var deltaYPercent = deltaY / canvas.height;
+                  
+                  // Actualizar posición
+                  currentPosX = Math.max(0, Math.min(1, currentPosX + deltaXPercent));
+                  currentPosY = Math.max(0, Math.min(1, currentPosY + deltaYPercent));
+                  
+                  // Actualizar punto de inicio para el siguiente movimiento
+                  dragStartX = mousePos.x;
+                  dragStartY = mousePos.y;
+                  
+                  updateValues();
+                });
+
+                canvas.addEventListener('mouseup', function(e) {
+                  if (isDragging) {
+                    isDragging = false;
+                    canvas.style.cursor = 'default';
+                    render(); // Re-renderizar para quitar el borde
+                  }
+                });
+
+                canvas.addEventListener('mouseleave', function(e) {
+                  if (isDragging) {
+                    isDragging = false;
+                    canvas.style.cursor = 'default';
+                    render();
+                  }
+                });
+
+                // Cambiar cursor cuando está sobre la imagen del diseño
+                canvas.addEventListener('mousemove', function(e) {
+                  if (isDragging || !designImg.width) return;
+                  
+                  var mousePos = getMousePos(e);
+                  
+                  if (isPointInDesign(mousePos.x, mousePos.y)) {
+                    canvas.style.cursor = 'grab';
+                  } else {
+                    canvas.style.cursor = 'default';
+                  }
+                });
+
+                // Event listeners
                 selectColor.addEventListener('change', loadBaseByColor);
                 inputFile.addEventListener('change', function (e) {
                   loadDesignFromFile(e.target.files[0]);
                 });
+                
+                // Event listener para el control deslizante de tamaño
+                tamañoSlider.addEventListener('input', updateValues);
 
+                // Inicializar valores
+                updateValues();
                 loadBaseByColor();
               })();
             </script>

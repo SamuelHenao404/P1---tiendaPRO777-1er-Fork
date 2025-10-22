@@ -21,6 +21,32 @@ class FormularioPersonalizacion(forms.Form):
     cantidad = forms.IntegerField(min_value=1, initial=1)
     ubicacion_en_prenda = forms.ChoiceField(choices=UBICACIONES)
     imagen_diseno = forms.ImageField(label="Sube tu diseño (PNG/JPG)", required=False)
+    
+    # Nuevos campos para control de tamaño y posición
+    tamaño_imagen = forms.FloatField(
+        min_value=0.1, 
+        max_value=1.0, 
+        initial=0.3,
+        label="Tamaño de la imagen",
+        help_text="Tamaño como porcentaje del ancho de la prenda (10% a 100%)",
+        widget=forms.NumberInput(attrs={'step': '0.05', 'min': '0.1', 'max': '1.0'})
+    )
+    posicion_x = forms.FloatField(
+        min_value=0.0, 
+        max_value=1.0, 
+        initial=0.5,
+        label="Posición horizontal",
+        help_text="Posición horizontal como porcentaje (0% = izquierda, 100% = derecha)",
+        widget=forms.NumberInput(attrs={'step': '0.01', 'min': '0.0', 'max': '1.0'})
+    )
+    posicion_y = forms.FloatField(
+        min_value=0.0, 
+        max_value=1.0, 
+        initial=0.35,
+        label="Posición vertical",
+        help_text="Posición vertical como porcentaje (0% = arriba, 100% = abajo)",
+        widget=forms.NumberInput(attrs={'step': '0.01', 'min': '0.0', 'max': '1.0'})
+    )
 
     def __init__(self, *args, **kwargs):
         producto_fijo = kwargs.pop('producto_fijo', None)

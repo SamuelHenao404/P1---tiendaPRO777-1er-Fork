@@ -24,6 +24,12 @@ class Diseno(models.Model):
     imagen_formateada = models.ImageField(upload_to='disenos/formateados/', blank=True, null=True)
     ubicacion_en_prenda = models.CharField(max_length=100, help_text="Ej: pecho, espalda, manga_izquierda, manga_derecha")
     generado_por = models.CharField(max_length=10, choices=GENERADO_CHOICES, default='usuario')
+    
+    # Nuevos campos para control de tamaño y posición
+    tamaño_imagen = models.FloatField(default=0.3, help_text="Tamaño de la imagen como porcentaje del ancho de la prenda (0.1 a 1.0)")
+    posicion_x = models.FloatField(default=0.5, help_text="Posición X como porcentaje del ancho de la prenda (0.0 a 1.0)")
+    posicion_y = models.FloatField(default=0.35, help_text="Posición Y como porcentaje de la altura de la prenda (0.0 a 1.0)")
+    
     creado_en = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -109,20 +115,25 @@ class ProductoPersonalizado(models.Model):
             ruta_diseno = self.diseno.imagen_formateada.path if self.diseno.imagen_formateada else self.diseno.imagen_original.path
             logo = Image.open(ruta_diseno).convert('RGBA')
 
-            ancho_objetivo = int(base.width * 0.4)
+            # Usar los nuevos campos de tamaño y posición del diseño
+            tamaño_imagen = getattr(self.diseno, 'tamaño_imagen', 0.3)
+            posicion_x = getattr(self.diseno, 'posicion_x', 0.5)
+            posicion_y = getattr(self.diseno, 'posicion_y', 0.35)
+            
+            # Limitar el tamaño entre 0.1 y 1.0
+            tamaño_imagen = max(0.1, min(1.0, tamaño_imagen))
+            
+            ancho_objetivo = int(base.width * tamaño_imagen)
             ratio = ancho_objetivo / logo.width
             logo = logo.resize((ancho_objetivo, int(logo.height * ratio)), Image.LANCZOS)
 
-            x = (base.width - logo.width) // 2
-            y = int(base.height * 0.35)
-
-            ub = (self.ubicacion_en_prenda or 'pecho').lower()
-            if 'espalda' in ub:
-                y = int(base.height * 0.30)
-            elif 'manga' in ub and 'izq' in ub:
-                x = int(base.width * 0.25); y = int(base.height * 0.40)
-            elif 'manga' in ub and 'der' in ub:
-                x = int(base.width * 0.55); y = int(base.height * 0.40)
+            # Calcular posición basada en los porcentajes guardados
+            x = int(base.width * posicion_x - logo.width / 2)
+            y = int(base.height * posicion_y - logo.height / 2)
+            
+            # Asegurar que la imagen no se salga de los límites
+            x = max(0, min(x, base.width - logo.width))
+            y = max(0, min(y, base.height - logo.height))
 
             base.alpha_composite(logo, (x, y))
 

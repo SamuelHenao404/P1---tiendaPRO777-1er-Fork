@@ -23,10 +23,18 @@ def personalizar(request, producto_id=None):
             ubicacion = form.cleaned_data['ubicacion_en_prenda']
             imagen = form.cleaned_data.get('imagen_diseno', None)
 
+            # Obtener los nuevos campos del formulario
+            tamaño_imagen = form.cleaned_data.get('tamaño_imagen', 0.3)
+            posicion_x = form.cleaned_data.get('posicion_x', 0.5)
+            posicion_y = form.cleaned_data.get('posicion_y', 0.35)
+            
             diseno = Diseno.objects.create(
                 usuario=request.user,
                 ubicacion_en_prenda=ubicacion,
-                generado_por='usuario'
+                generado_por='usuario',
+                tamaño_imagen=tamaño_imagen,
+                posicion_x=posicion_x,
+                posicion_y=posicion_y
             )
             if imagen:
                 diseno.imagen_original = imagen
