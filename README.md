@@ -1,7 +1,7 @@
-# Proyecto CECILIA
+# Proyecto CustomShirt
 
 ## Descripción
-CECILIA es una plataforma web para la personalización y compra de prendas de vestir, desarrollada con Django. Permite a los usuarios diseñar camisetas y hoodies, agregar productos personalizados al carrito y realizar compras.
+CustomShirt es una plataforma web para la personalización y compra de prendas de vestir, desarrollada con Django. Permite a los usuarios diseñar camisetas y hoodies, agregar productos personalizados al carrito y realizar compras.
 
 ## Requisitos
 - Python 3.13+
@@ -49,8 +49,3 @@ CECILIA es una plataforma web para la personalización y compra de prendas de ve
 
 ## Contacto
 Para dudas o soporte, contacta al equipo de desarrollo.
-
-## Integrantes
-- Juan Simón Ospina
-- Sebastián Durán
-- Thomas Buitrago
