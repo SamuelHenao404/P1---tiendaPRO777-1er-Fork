@@ -16,6 +16,7 @@ def cart(request):
     personalizado_items = []
     total_personalizados = 0
     carrito_perso = request.session.get('carrito_personalizado', [])
+    print(f"DEBUG: Carrito personalizado en sesión: {carrito_perso}")  # Debug log
     from personalizaciones.models import ProductoPersonalizado
     for it in carrito_perso:
         try:
@@ -30,7 +31,9 @@ def cart(request):
                 'color': it.get('color'),
                 'subtotal': subtotal
             })
-        except Exception:
+            print(f"DEBUG: Producto personalizado agregado: {pp.id}")  # Debug log
+        except Exception as e:
+            print(f"DEBUG: Error procesando producto personalizado {it.get('pp_id', 'N/A')}: {e}")  # Debug log
             continue
 
     total = summ + total_personalizados
@@ -42,6 +45,8 @@ def cart(request):
             "cart_items": cart_items,
             "personalizado_items": personalizado_items,
             "sum": total,
+            "debug_carrito": carrito_perso,  # Para depuración
+            "debug_count": len(personalizado_items),  # Para depuración
         },
     )
 
@@ -73,6 +78,20 @@ def remove_from_cart(request, item_id, size):
     item = Item.objects.get(pk=item_id)
     cart = Cart.objects.get(user=request.user)
     CartItem.objects.filter(cart=cart, item=item, size=size).delete()
+    return redirect("cart:cart")
+
+
+@login_required(login_url="login")
+def remove_personalized_item(request, pp_id):
+    """Eliminar un producto personalizado del carrito"""
+    carrito_perso = request.session.get('carrito_personalizado', [])
+    
+    # Buscar y eliminar el producto personalizado
+    carrito_perso = [item for item in carrito_perso if item.get('pp_id') != pp_id]
+    
+    # Actualizar la sesión
+    request.session['carrito_personalizado'] = carrito_perso
+    
     return redirect("cart:cart")
 
 

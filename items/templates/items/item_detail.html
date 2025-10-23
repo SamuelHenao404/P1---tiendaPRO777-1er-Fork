@@ -32,6 +32,51 @@
 
             <h5 class="mt-2">Personaliza tu prenda</h5>
             
+            <!-- Opciones de diseño -->
+            <div class="row mb-3">
+              <div class="col-12">
+                <label class="form-label">¿Cómo quieres crear tu diseño?</label>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="tipo_diseno" id="tipo_imagen" value="imagen" checked>
+                  <label class="form-check-label" for="tipo_imagen">
+                    <strong>📁 Subir mi propia imagen</strong> - Sube una imagen que ya tienes
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="tipo_diseno" id="tipo_ia" value="ia">
+                  <label class="form-check-label" for="tipo_ia">
+                    <strong>🤖 Generar con IA</strong> - Describe lo que quieres y la IA lo creará
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- FUNCIONALIDAD DE IA DESHABILITADA -->
+            <!-- 
+            <div class="row mb-3" id="prompt_ia_container" style="display: none;">
+              <div class="col-12">
+                <label for="prompt_ia" class="form-label">Describe tu diseño ideal</label>
+                <textarea id="prompt_ia" name="prompt_ia" class="form-control" rows="3" 
+                          placeholder="Ejemplo: Un gato astronauta con colores azul y blanco, estilo minimalista..."></textarea>
+                <div class="form-text">
+                  <strong>💡 Ideas:</strong> "Logo de mi empresa", "Mi nombre en tipografía elegante", "Un dragón en estilo vintage", "Patrón geométrico moderno"
+                </div>
+                <div class="mt-2">
+                  <button type="button" id="generar_diseno_btn" class="btn btn-primary">
+                    <span id="generar_text">🤖 Generar Diseño con IA</span>
+                    <span id="generando_text" style="display: none;">⏳ Generando...</span>
+                  </button>
+                </div>
+                <div id="ai_result" class="mt-2" style="display: none;">
+                  <div class="alert alert-success">
+                    <h6>✅ Diseño Generado por IA</h6>
+                    <div id="design_info"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            -->
+            
             <!-- Control de tamaño -->
             <div class="row mb-3">
               <div class="col-md-6">
@@ -48,7 +93,7 @@
 
             <form class="row gy-2 gx-3 align-items-center"
                   method="post"
-                  action="{% url 'personalizar_producto' item.id %}"
+                  action="{% url 'personalizaciones:personalizar_producto' item.id %}"
                   enctype="multipart/form-data">
               {% csrf_token %}
 
@@ -84,7 +129,7 @@
                        class="form-control form-control-sm" required>
               </div>
 
-              <div class="col-sm-4">
+              <div class="col-sm-4" id="imagen_container">
                 <label for="perso_imagen" class="form-label mb-0 small">Diseño (PNG/JPG)</label>
                 <input id="perso_imagen" type="file" name="imagen_diseno"
                        accept=".png,.jpg,.jpeg" class="form-control form-control-sm">
@@ -96,6 +141,7 @@
               <input type="hidden" name="tamaño_imagen" id="tamaño_imagen_hidden" value="0.3">
               <input type="hidden" name="posicion_x" id="posicion_x_hidden" value="0.5">
               <input type="hidden" name="posicion_y" id="posicion_y_hidden" value="0.35">
+              <input type="hidden" name="design_id_temp" id="design_id_temp" value="">
 
               <div class="col-sm-2 d-grid">
                 <label class="form-label mb-0 invisible">.</label>
@@ -107,13 +153,17 @@
 
             <script>
               (function () {
-                var PLANTILLAS = {
-                  {% if plantillas %}
-                    {% for p in plantillas %}
-                      "{{ p.color|lower }}": "{{ p.imagen_base.url }}"{% if not forloop.last %},{% endif %}
-                    {% endfor %}
-                  {% endif %}
-                };
+                var PLANTILLAS = {};
+                {% if plantillas %}
+                  {% for p in plantillas %}
+                    PLANTILLAS["{{ p.color|lower }}"] = "{{ p.imagen_base.url }}";
+                  {% endfor %}
+                {% else %}
+                  PLANTILLAS["blanco"] = "{{ item.image.url|default:'' }}";
+                  PLANTILLAS["negro"] = "{{ item.image.url|default:'' }}";
+                  PLANTILLAS["azul"] = "{{ item.image.url|default:'' }}";
+                  PLANTILLAS["rojo"] = "{{ item.image.url|default:'' }}";
+                {% endif %}
 
                 var canvas = document.getElementById('mockupCanvas');
                 var ctx = canvas.getContext('2d');
@@ -317,9 +367,52 @@
                 // Event listener para el control deslizante de tamaño
                 tamañoSlider.addEventListener('input', updateValues);
 
+                // Event listeners para los radio buttons de tipo de diseño
+                var tipoImagen = document.querySelector('input[name="tipo_diseno"][value="imagen"]');
+                var tipoIA = document.querySelector('input[name="tipo_diseno"][value="ia"]');
+                var promptContainer = document.getElementById('prompt_ia_container');
+                var imagenContainer = document.getElementById('imagen_container');
+                var generarBtn = document.getElementById('generar_diseno_btn');
+                var promptTextarea = document.getElementById('prompt_ia');
+                var aiResult = document.getElementById('ai_result');
+                var designInfo = document.getElementById('design_info');
+                var generatedDesignId = null;
+
+                function toggleDesignFields() {
+                  if (tipoIA.checked) {
+                    promptContainer.style.display = 'block';
+                    imagenContainer.style.display = 'none';
+                    inputFile.value = ''; // Limpiar archivo seleccionado
+                    designImg = new Image(); // Limpiar imagen
+                    render();
+                    aiResult.style.display = 'none'; // Ocultar resultado anterior
+                  } else {
+                    promptContainer.style.display = 'none';
+                    imagenContainer.style.display = 'block';
+                    document.getElementById('prompt_ia').value = ''; // Limpiar prompt
+                    aiResult.style.display = 'none'; // Ocultar resultado anterior
+                  }
+                }
+
+                // FUNCIÓN DE IA DESHABILITADA
+                function generarDiseñoIA() {
+                  // Mostrar mensaje de funcionalidad deshabilitada
+                  alert('La funcionalidad de generación de diseños con IA ha sido deshabilitada.');
+                  
+                  // Restaurar estado del botón
+                  document.getElementById('generar_text').style.display = 'inline';
+                  document.getElementById('generando_text').style.display = 'none';
+                  generarBtn.disabled = false;
+                }
+
+                tipoImagen.addEventListener('change', toggleDesignFields);
+                // tipoIA.addEventListener('change', toggleDesignFields); // DESHABILITADO - IA
+                // generarBtn.addEventListener('click', generarDiseñoIA); // DESHABILITADO - IA
+
                 // Inicializar valores
                 updateValues();
                 loadBaseByColor();
+                toggleDesignFields(); // Asegurar estado inicial correcto
               })();
             </script>
 

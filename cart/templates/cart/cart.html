@@ -9,6 +9,16 @@
     </div>
 </header>
 <div class="container my-5">
+    {# Información de depuración #}
+    <div class="alert alert-info">
+        <strong>DEBUG:</strong> 
+        Carrito personalizado: {{ debug_carrito|length }} items, 
+        Procesados: {{ debug_count }} items
+        {% if debug_carrito %}
+            <br>Datos: {{ debug_carrito }}
+        {% endif %}
+    </div>
+    
     {# Carrito de productos normales #}
     {% for item in cart_items %}
     <div class="card border-light my-3">
@@ -63,7 +73,7 @@
                             Sin imagen
                         {% endif %}
                     </p>
-                    <a href="{% url 'carrito_eliminar' forloop.counter0 %}" class="btn btn-outline-danger fs-5">Eliminar</a>
+                    <a href="{% url 'cart:remove_personalized_item' item.pp.id %}" class="btn btn-outline-danger fs-5">Eliminar</a>
                 </div>
             </div>
             </div>

@@ -47,6 +47,31 @@ class FormularioPersonalizacion(forms.Form):
         help_text="Posición vertical como porcentaje (0% = arriba, 100% = abajo)",
         widget=forms.NumberInput(attrs={'step': '0.01', 'min': '0.0', 'max': '1.0'})
     )
+    
+    # Campo para prompt de IA
+    prompt_ia = forms.CharField(
+        max_length=500,
+        required=False,
+        label="Descripción para IA",
+        help_text="Describe el diseño que quieres que la IA genere (ej: 'Un gato astronauta con colores azul y blanco')",
+        widget=forms.Textarea(attrs={
+            'rows': 3,
+            'placeholder': 'Ejemplo: Un diseño minimalista con mi nombre en tipografía elegante...',
+            'class': 'form-control'
+        })
+    )
+    
+    # Campo para elegir entre imagen propia o IA - DESHABILITADO (usamos HTML estático)
+    tipo_diseno = forms.ChoiceField(
+        choices=[
+            ('imagen', 'Subir mi propia imagen'),
+            ('ia', 'Generar con IA')
+        ],
+        initial='imagen',
+        label="Tipo de diseño",
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        required=False  # Cambiado a False porque usamos HTML estático
+    )
 
     def __init__(self, *args, **kwargs):
         producto_fijo = kwargs.pop('producto_fijo', None)
@@ -57,3 +82,18 @@ class FormularioPersonalizacion(forms.Form):
             self.fields['producto'].widget = forms.HiddenInput()
         else:
             self.fields['producto'].queryset = Item.objects.all().order_by('id')
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        tipo_diseno = cleaned_data.get('tipo_diseno')
+        imagen_diseno = cleaned_data.get('imagen_diseno')
+        prompt_ia = cleaned_data.get('prompt_ia')
+        
+        # Validar que se proporcione una imagen o un prompt de IA
+        if tipo_diseno == 'imagen' and not imagen_diseno:
+            raise forms.ValidationError("Debes subir una imagen cuando seleccionas 'Subir mi propia imagen'.")
+        
+        if tipo_diseno == 'ia' and not prompt_ia:
+            raise forms.ValidationError("Debes describir el diseño cuando seleccionas 'Generar con IA'.")
+        
+        return cleaned_data
