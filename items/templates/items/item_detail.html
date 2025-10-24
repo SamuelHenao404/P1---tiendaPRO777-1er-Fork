@@ -51,8 +51,7 @@
               </div>
             </div>
 
-            <!-- FUNCIONALIDAD DE IA DESHABILITADA -->
-            <!-- 
+            <!-- Funcionalidad de IA habilitada -->
             <div class="row mb-3" id="prompt_ia_container" style="display: none;">
               <div class="col-12">
                 <label for="prompt_ia" class="form-label">Describe tu diseño ideal</label>
@@ -75,7 +74,6 @@
                 </div>
               </div>
             </div>
-            -->
             
             <!-- Control de tamaño -->
             <div class="row mb-3">
@@ -143,6 +141,12 @@
               <input type="hidden" name="posicion_y" id="posicion_y_hidden" value="0.35">
               <input type="hidden" name="design_id_temp" id="design_id_temp" value="">
 
+              <div class="col-sm-2 d-grid">
+                <label class="form-label mb-0 invisible">.</label>
+                <button type="button" id="eliminar_imagen_btn" class="btn btn-danger btn-sm" style="display: none;">
+                  🗑️ Eliminar imagen
+                </button>
+              </div>
               <div class="col-sm-2 d-grid">
                 <label class="form-label mb-0 invisible">.</label>
                 <button type="submit" class="btn btn-primary btn-sm">
@@ -265,11 +269,19 @@
                 }
 
                 function loadDesignFromFile(file) {
-                  if (!file) { designImg = new Image(); render(); return; }
+                  if (!file) { 
+                    designImg = new Image(); 
+                    render(); 
+                    toggleEliminarButton();
+                    return; 
+                  }
                   var reader = new FileReader();
                   reader.onload = function (e) {
                     designImg = new Image();
-                    designImg.onload = render;
+                    designImg.onload = function() {
+                      render();
+                      toggleEliminarButton();
+                    };
                     designImg.src = e.target.result;
                   };
                   reader.readAsDataURL(file);
@@ -394,25 +406,136 @@
                   }
                 }
 
-                // FUNCIÓN DE IA DESHABILITADA
+                // FUNCIÓN DE IA HABILITADA
                 function generarDiseñoIA() {
-                  // Mostrar mensaje de funcionalidad deshabilitada
-                  alert('La funcionalidad de generación de diseños con IA ha sido deshabilitada.');
+                  const prompt = document.getElementById('prompt_ia').value.trim();
                   
-                  // Restaurar estado del botón
-                  document.getElementById('generar_text').style.display = 'inline';
-                  document.getElementById('generando_text').style.display = 'none';
-                  generarBtn.disabled = false;
+                  if (!prompt) {
+                    alert('Por favor, describe tu diseño ideal en el campo de texto.');
+                    return;
+                  }
+                  
+                  // Mostrar estado de carga
+                  document.getElementById('generar_text').style.display = 'none';
+                  document.getElementById('generando_text').style.display = 'inline';
+                  generarBtn.disabled = true;
+                  
+                  // Ocultar resultado anterior
+                  document.getElementById('ai_result').style.display = 'none';
+                  
+                  // Llamar a la API
+                  fetch('{% url "personalizaciones:generar_diseno_ia" %}', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                      prompt: prompt,
+                      item_type: '{{ item.category|default:"camiseta" }}'
+                    })
+                  })
+                  .then(response => response.json())
+                  .then(data => {
+                    if (data.success) {
+                      // Mostrar información del diseño
+                      const designInfo = document.getElementById('design_info');
+                      designInfo.innerHTML = `
+                        <p><strong>Concepto:</strong> ${data.design_data.concepto}</p>
+                        <p><strong>Elementos:</strong> ${data.design_data.elementos}</p>
+                        <p><strong>Estilo:</strong> ${data.design_data.estilo}</p>
+                        <p><strong>Colores:</strong> ${data.design_data.colores}</p>
+                      `;
+                      
+                      // Mostrar resultado
+                      document.getElementById('ai_result').style.display = 'block';
+                      
+                      // Crear imagen y mostrarla en el canvas
+                      const img = new Image();
+                      img.onload = function() {
+                        // Usar la función loadDesignFromFile para cargar la imagen generada
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = 400;
+                        canvas.height = 400;
+                        
+                        // Dibujar la imagen generada en el canvas temporal
+                        ctx.drawImage(img, 0, 0, 400, 400);
+                        
+                        // Convertir a blob y cargar como diseño
+                        canvas.toBlob(function(blob) {
+                          const file = new File([blob], 'diseno_ia.png', { type: 'image/png' });
+                          loadDesignFromFile(file);
+                        });
+                      };
+                      img.src = 'data:image/png;base64,' + data.image_base64;
+                      
+                    } else {
+                      alert('Error generando diseño: ' + data.error);
+                    }
+                  })
+                  .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error de conexión. Por favor, intenta de nuevo.');
+                  })
+                  .finally(() => {
+                    // Restaurar estado del botón
+                    document.getElementById('generar_text').style.display = 'inline';
+                    document.getElementById('generando_text').style.display = 'none';
+                    generarBtn.disabled = false;
+                  });
+                }
+
+                // Función para eliminar imagen
+                function eliminarImagen() {
+                  if (confirm('¿Estás seguro de que quieres eliminar la imagen actual?')) {
+                    // Limpiar la imagen del diseño
+                    designImg = new Image();
+                    
+                    // Limpiar el campo de archivo
+                    inputFile.value = '';
+                    
+                    // Limpiar el prompt de IA
+                    promptTextarea.value = '';
+                    
+                    // Ocultar resultado de IA
+                    aiResult.style.display = 'none';
+                    
+                    // Ocultar botón de eliminar
+                    document.getElementById('eliminar_imagen_btn').style.display = 'none';
+                    
+                    // Resetear valores por defecto
+                    currentPosX = 0.5;
+                    currentPosY = 0.35;
+                    tamañoSlider.value = 0.3;
+                    
+                    // Actualizar y renderizar
+                    updateValues();
+                    
+                    console.log('Imagen eliminada correctamente');
+                  }
+                }
+
+                // Función para mostrar/ocultar botón de eliminar
+                function toggleEliminarButton() {
+                  var eliminarBtn = document.getElementById('eliminar_imagen_btn');
+                  if (designImg.width > 0) {
+                    eliminarBtn.style.display = 'block';
+                  } else {
+                    eliminarBtn.style.display = 'none';
+                  }
                 }
 
                 tipoImagen.addEventListener('change', toggleDesignFields);
-                // tipoIA.addEventListener('change', toggleDesignFields); // DESHABILITADO - IA
-                // generarBtn.addEventListener('click', generarDiseñoIA); // DESHABILITADO - IA
+                tipoIA.addEventListener('change', toggleDesignFields);
+                generarBtn.addEventListener('click', generarDiseñoIA);
+                document.getElementById('eliminar_imagen_btn').addEventListener('click', eliminarImagen);
 
                 // Inicializar valores
                 updateValues();
                 loadBaseByColor();
                 toggleDesignFields(); // Asegurar estado inicial correcto
+                toggleEliminarButton(); // Estado inicial del botón eliminar
               })();
             </script>
 

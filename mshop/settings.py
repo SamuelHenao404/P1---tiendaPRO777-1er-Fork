@@ -137,5 +137,32 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
-# Configuración de IA eliminada - funcionalidad deshabilitada
-# GEMINI_API_KEY = None
+# Configuración de Hugging Face
+def load_hf_api_key():
+    """Carga la API key de Hugging Face desde variables de entorno"""
+    import os
+    
+    # Intentar cargar desde archivo IA.env manualmente
+    try:
+        env_file = os.path.join(os.path.dirname(__file__), '..', 'IA.env')
+        if os.path.exists(env_file):
+            with open(env_file, 'r') as f:
+                for line in f:
+                    if line.strip() and not line.startswith('#'):
+                        key, value = line.strip().split('=', 1)
+                        key = key.strip()
+                        value = value.strip().strip('"').strip("'")  # Remover comillas
+                        os.environ[key] = value
+    except Exception:
+        pass  # Si no se puede leer el archivo IA.env, continuar
+    
+    # Buscar la API key con diferentes nombres posibles
+    api_key = os.getenv('HF_TOKEN') or os.getenv('hf_token') or os.getenv('HUGGINGFACE_TOKEN')
+    
+    if not api_key:
+        print("⚠️  Advertencia: No se encontró HF_TOKEN en variables de entorno")
+        return None
+    
+    return api_key
+
+HF_API_KEY = load_hf_api_key()

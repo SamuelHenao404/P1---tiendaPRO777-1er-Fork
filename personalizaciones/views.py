@@ -9,6 +9,8 @@ import json
 from .forms import FormularioPersonalizacion
 from .models import Diseno, ProductoPersonalizado, PRODUCTO_MODEL_PATH
 from items.models import Item
+from .fal_utils import generate_design_from_prompt, create_image_from_design
+from django.core.files.base import ContentFile
 
 APP_LABEL, MODEL_NAME = PRODUCTO_MODEL_PATH.split('.')
 Producto = apps.get_model(APP_LABEL, MODEL_NAME)
@@ -60,9 +62,27 @@ def personalizar(request, producto_id=None):
                     diseno.imagen_original = imagen
                     diseno.save()
             elif tipo_diseno == 'ia':
-                # FUNCIONALIDAD DESHABILITADA - Diseño generado por IA
-                messages.error(request, "La funcionalidad de generación de diseños con IA ha sido deshabilitada.")
-                return redirect('cart:cart')
+                # Diseño generado por IA
+                if prompt_ia:
+                    try:
+                        # Generar diseño usando fal.ai
+                        design_data = generate_design_from_prompt(prompt_ia, producto.tipo if hasattr(producto, 'tipo') else 'camiseta')
+                        
+                        # Crear imagen del diseño
+                        image_buffer = create_image_from_design(design_data)
+                        
+                        # Guardar imagen en el diseño
+                        image_file = ContentFile(image_buffer.getvalue(), name=f"diseno_ia_{diseno.id}.png")
+                        diseno.imagen_original = image_file
+                        diseno.save()
+                        
+                        messages.success(request, f"Diseño generado con IA: {design_data.get('concepto', 'Diseño personalizado')}")
+                    except Exception as e:
+                        messages.error(request, f"Error generando diseño con IA: {str(e)}")
+                        return redirect('cart:cart')
+                else:
+                    messages.error(request, "Debe proporcionar un prompt para generar el diseño con IA.")
+                    return redirect('cart:cart')
             
             perso = ProductoPersonalizado.objects.create(
                 producto=producto,
@@ -116,14 +136,42 @@ def carrito_eliminar(request, index):
         messages.info(request, "Ítem eliminado del carrito.")
     return redirect('carrito_personalizado')
 
-# FUNCIÓN DESHABILITADA - Generación de diseños con IA eliminada
-# @login_required
-# @require_POST
-# def generar_diseno_ia(request):
-#     """
-#     Vista AJAX para generar diseños con IA - DESHABILITADA
-#     """
-#     return JsonResponse({
-#         'success': False,
-#         'error': 'La funcionalidad de generación de diseños con IA ha sido deshabilitada'
-#     })
+@login_required
+@require_POST
+def generar_diseno_ia(request):
+    """
+    Vista AJAX para generar diseños con IA usando fal.ai
+    """
+    try:
+        data = json.loads(request.body)
+        prompt = data.get('prompt', '')
+        item_type = data.get('item_type', 'camiseta')
+        
+        if not prompt:
+            return JsonResponse({
+                'success': False,
+                'error': 'Debe proporcionar un prompt para generar el diseño'
+            })
+        
+        # Generar diseño usando fal.ai
+        design_data = generate_design_from_prompt(prompt, item_type)
+        
+        # Crear imagen del diseño
+        image_buffer = create_image_from_design(design_data)
+        
+        # Convertir imagen a base64 para enviar al frontend
+        import base64
+        image_base64 = base64.b64encode(image_buffer.getvalue()).decode('utf-8')
+        
+        return JsonResponse({
+            'success': True,
+            'design_data': design_data,
+            'image_base64': image_base64,
+            'message': f"Diseño generado: {design_data.get('concepto', 'Diseño personalizado')}"
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Error generando diseño: {str(e)}'
+        })
